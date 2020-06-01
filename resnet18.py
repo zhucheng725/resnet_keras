@@ -1,5 +1,8 @@
 
 import keras
+from keras.utils.vis_utils import plot_model
+#sudo apt-get install graphviz
+#pip3 install pydotplus
 
 input = keras.layers.Input(shape=(224,224,3))
 
@@ -121,4 +124,4 @@ x5 = keras.layers.Dense(1000, activation='softmax')(x5)
 model = keras.models.Model(input, x5)
 model.summary()
 
-
+plot_model(model,to_file='/media/kirito/1T/procedure/onnx/mobilenet_v2_ssdlite_keras-master/resnet18.png', show_shapes= True)
