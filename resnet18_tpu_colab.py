@@ -1,3 +1,5 @@
+#tf2.3 keras2.2.4
+
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import RMSprop
 import tensorflow.keras as keras
