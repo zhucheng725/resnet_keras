@@ -1,5 +1,3 @@
-
-
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import RMSprop
 import tensorflow.keras as keras
@@ -7,6 +5,7 @@ import tensorflow as tf
 import os
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='grpc://' + os.environ['COLAB_TPU_ADDR'])
 tf.config.experimental_connect_to_cluster(resolver)
@@ -15,6 +14,18 @@ tf.tpu.experimental.initialize_tpu_system(resolver)
 #print("All devices: ", tf.config.list_logical_devices('TPU'))
 strategy = tf.distribute.TPUStrategy(resolver)
 
+#!git clone https://github.com/zhucheng725/resnet_keras
+#!ls 
+#%cd resnet_keras
+#!unzip cat1 
+#!unzip dog1
+#!mkdir training_data
+#!rm -rf cat1.zip dog1.zip
+#!mv cat1 training_data
+#!mv dog1 training_data
+#!rm -rf cat1 dog1
+#%cd training_data
+#!ls
 
 
 def create_model():
@@ -151,6 +162,9 @@ def create_training_data():
     img[:, :, 0] -= 103.939
     img[:, :, 1] -= 116.779
     img[:, :, 2] -= 123.68
+    img[:, :, 0] = img[:, :, 0] / 255
+    img[:, :, 1] = img[:, :, 1] / 255
+    img[:, :, 2] = img[:, :, 2] / 255
     img = img[:, :, ::-1]
     img = img.reshape((1,224,224,3))
     if k ==0:
@@ -165,6 +179,9 @@ def create_training_data():
     img[:, :, 0] -= 103.939
     img[:, :, 1] -= 116.779
     img[:, :, 2] -= 123.68
+    img[:, :, 0] = img[:, :, 0] / 255
+    img[:, :, 1] = img[:, :, 1] / 255
+    img[:, :, 2] = img[:, :, 2] / 255
     img = img[:, :, ::-1]
     img = img.reshape((1,224,224,3))
     if k ==0:
@@ -177,25 +194,30 @@ def create_training_data():
   a = np.zeros((100,2))
   b = np.zeros((100,2))
   for i in range(100):
+    a[i][0] = 1
+  for i in range(100):
     b[i][1] = 1
-  training_data_y = np.vstack((a,b))
 
+  training_data_y = np.vstack((a,b))
   return training_data_x, training_data_y
 
 training_x,training_y =create_training_data()
 
-#print(training_x.shape, training_y.shape)
+
 
 with strategy.scope():
   model = create_model()
-  #model.summary()
-  model.compile(optimizer= RMSprop(lr = 0.001),
-                experimental_steps_per_execution = 50,
-                loss='categorical_crossentropy',
-                metrics=['acc'])
+  model.compile(optimizer=RMSprop(lr = 0.001),experimental_steps_per_execution = 50,loss='categorical_crossentropy',metrics=['mae', 'acc'])
 
 
 history = model.fit(
-    x = training_x, y = training_y, batch_size=64, epochs=100, verbose = 1, shuffle=True
+    x = training_x, y = training_y, batch_size=128, epochs=200, verbose = 1, shuffle=True
 )
 
+plt.plot(history.history['acc'])
+plt.plot(history.history['mae'])
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.show()
